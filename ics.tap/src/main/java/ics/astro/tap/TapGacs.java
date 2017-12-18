@@ -1,6 +1,7 @@
 package ics.astro.tap;
 
 import ics.astro.tap.internal.Tap;
+import ics.astro.tap.parser.VOMatcher;
 import ics.astro.tap.parser.VOParser;
 
 import java.io.IOException;
@@ -41,7 +42,7 @@ public class TapGacs implements Tap {
             String[] location = conn.getHeaderField("Location").split("/");
             jobId = location[location.length - 1];
         } else {
-            logger.error("Reponse code: {}\n{}", code, conn.getResponseMessage());
+            logger.error("Unexpected reponse code: {}\n{}", code, conn.getResponseMessage());
         }
         return jobId;
     }
@@ -55,10 +56,9 @@ public class TapGacs implements Tap {
         conn.connect();
         int code = getResponseCode(conn);
         if (code == HttpURLConnection.HTTP_OK || code == HttpURLConnection.HTTP_SEE_OTHER) {
-            logger.debug("{}", code);
             return conn.getInputStream();
         } else {
-            logger.error("Reponse code: {}\n{}", code, conn.getResponseMessage());
+            logger.error("Unexpected reponse code: {}\n{}", code, conn.getResponseMessage());
             return null;
         }
     }

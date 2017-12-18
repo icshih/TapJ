@@ -1,5 +1,6 @@
 module ics.tap.test {
     requires slf4j.api;
-    requires ics.tap;
+    requires logback.classic;
     requires org.junit.jupiter.api;
+    requires ics.tap;
 }

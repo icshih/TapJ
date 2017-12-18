@@ -49,11 +49,11 @@ public interface Tap {
         logger.debug(url);
         HttpURLConnection conn = getHttpURLConnection(url);
         conn.connect();
-        int code = conn.getResponseCode();
+        int code = getResponseCode(conn);
         if (code == HttpsURLConnection.HTTP_OK)
             return conn.getInputStream();
         else {
-            logger.error("Reponse code: {}\n{}", code, conn.getResponseMessage());
+            logger.error("Unexpected reponse code: {}\n{}", code, conn.getResponseMessage());
             return null;
         }
     }
@@ -66,7 +66,9 @@ public interface Tap {
      * @throws IOException
      */
     default int getResponseCode(HttpURLConnection conn) throws IOException {
-        return conn.getResponseCode();
+        int code = conn.getResponseCode();
+        logger.debug("Response code: {}", code);
+        return code;
     }
 
     /**
