@@ -5,14 +5,13 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>ics.tap</groupId>
-    <artifactId>root</artifactId>
-    <packaging>pom</packaging>
+    <artifactId>tapJ</artifactId>
+    <packaging>jar</packaging>
     <version>1.0-SNAPSHOT</version>
-    <name>root</name>
+    <name>TapJ</name>
     
     <modules>
         <module>ics.tap</module>
-        <module>ics.tap.test</module>
     </modules>
 
 </project>
