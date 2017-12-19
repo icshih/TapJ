@@ -1,0 +1,31 @@
+<VOTABLE version="1.2" xmlns="http://www.ivoa.net/xml/VOTable/v1.2">
+    <RESOURCE type="results">
+        <INFO name="QUERY_STATUS" value="ERROR">
+            Cannot parse query 'SELECT TOP 1 * FROM public.gaia_source' for job '1513690893885O': 1 unresolved identifiers: gaia_source [l.1 c.21 - l.1 c.39] !
+        </INFO>
+        <INFO name="HttpErrorCode" value="-1"/>
+        <INFO name="Action" value="Executing ADQL"/>
+        <INFO name="Exception" value="esavo.uws.UwsException"/>
+        <INFO name="StackTrace" value="ERROR">
+            esavo.tap.AbstractADQLExecutor	executeADQL	258
+            esavo.tap.ADQLExecutor	execute	140
+            esavo.sl.tap.actions.EsdcADQLExecutor	execute	71
+            esac.archive.gacs.sl.tap.actions.GacsADQLExecutor	execute	44
+            esavo.uws.scheduler.UwsJobThread	run	210
+
+            Caused by esavo.adql.db.exception.UnresolvedIdentifiersException
+            1 unresolved identifiers: gaia_source [l.1 c.21 - l.1 c.39] !
+            esavo.adql.db.DBChecker	check	190
+            esavo.adql.db.DBChecker	check	135
+            esavo.adql.parser.ADQLParser	Query	487
+            esavo.adql.parser.ADQLParser	parseQuery	286
+            esavo.tap.AbstractADQLExecutor	parseADQL	377
+            esavo.tap.AbstractADQLExecutor	executeADQL	256
+            esavo.tap.ADQLExecutor	execute	140
+            esavo.sl.tap.actions.EsdcADQLExecutor	execute	71
+            esac.archive.gacs.sl.tap.actions.GacsADQLExecutor	execute	44
+            esavo.uws.scheduler.UwsJobThread	run	210
+
+        </INFO>
+    </RESOURCE>
+</VOTABLE>

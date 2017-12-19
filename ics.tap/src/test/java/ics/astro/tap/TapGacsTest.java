@@ -1,13 +1,17 @@
 package ics.astro.tap;
 
 import ics.astro.tap.parser.VOParser;
+import ics.astro.tap.utils.Utils;
+import net.ivoa.xml.uws.v1.ExecutionPhase;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.List;
 
 class TapGacsTest {
@@ -63,26 +67,69 @@ class TapGacsTest {
 
     @Test
     void getJobList() {
+        try {
+            InputStream is = gacs.getJobList();
+            Assertions.assertNotNull(is);
+            Assertions.assertNotNull(VOParser.parseJobs(is));
+            is.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Test
     void getJobSummary() {
-    }
+        try {
+            InputStream is = gacs.getJobList();
+            String id = VOParser.parseJobs(is).getJobref().stream().findFirst().get().getId();
+            is.close();
+            InputStream js = gacs.getJobSummary(id);
+            Assertions.assertNotNull(js);
+            VOParser.parseJobId(js);
+            Utils.display(js);
+            js.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-    @Test
-    void getJobId() {
     }
 
     @Test
     void updateJobPhase() {
+        try {
+            String jobId = gacs.runAsynchronousJob("SELECT TOP 1 * FROM gaiadr1.gaia_source WHERE phot_g_mean_mag > 17.5 AND phot_g_mean_mag < 17.7");
+            String phase = gacs.updateJobPhase(jobId, 1);
+            Assertions.assertEquals("COMPLETED", phase);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Test
     void getJobPhase() {
+        try {
+            String jobId = gacs.runAsynchronousJob("SELECT TOP 1 * FROM gaiadr1.gaia_source");
+            String phase = gacs.getJobPhase(jobId);
+            Assertions.assertNotNull(phase);
+            Assertions.assertEquals("COMPLETED", phase);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Test
     void getJobError() {
+        try {
+            String jobId = gacs.runAsynchronousJob("SELECT TOP 1 * FROM public.gaia_source");
+            String phase = gacs.getJobPhase(jobId);
+            Assertions.assertEquals("ERROR", phase);
+            String error = gacs.getJobError(jobId);
+            Assertions.assertNotNull(error);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Test
@@ -92,5 +139,4 @@ class TapGacsTest {
     @Test
     void getJobResult() {
     }
-
 }

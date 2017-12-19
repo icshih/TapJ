@@ -75,11 +75,6 @@ public class TapVIzieR implements Tap {
         return null;
     }
 
-    @Override
-    public String getJobId(HttpURLConnection conn) throws Exception {
-        return null;
-    }
-
     /**
      * Gets the job identifier of an asynchronous query
      * @param inputStream of the asynchronous query
@@ -160,8 +155,7 @@ public class TapVIzieR implements Tap {
     }
 
     @Override
-    public Integer deleteJob(String jobId) {
-        return null;
+    public void deleteJob(String jobId) {
     }
 
     @Override

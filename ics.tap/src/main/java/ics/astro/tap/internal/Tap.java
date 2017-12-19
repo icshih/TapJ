@@ -11,15 +11,18 @@ import java.net.URL;
 
 /**
  * Table Access Protocol interface
+ *
+ * <p>TAP is an IVOA standard to access tabular data.
+ * See specification, http://www.ivoa.net/documents/TAP/20170830/PR-TAP-1.1-20170830.html</p>
  */
 public interface Tap {
 
     String table = "tables";
     String sync = "sync";
     String async = "async";
-    String async_phase = async + "/%d/phase";
-    String async_result = async + "/%d/results/result";
-    String async_error = async + "/%d/error";
+    String async_phase = async + "/%s/phase";
+    String async_result = async + "/%s/results/result";
+    String async_error = async + "/%s/error";
     String ENC = "UTF-8";
     static final Logger logger = LoggerFactory.getLogger(Tap.class);
 
@@ -118,7 +121,7 @@ public interface Tap {
      *
      * @return
      */
-    InputStream getJobList();
+    InputStream getJobList() throws IOException;
 
     /**
      * Gets the asynchronous job summary
@@ -126,16 +129,20 @@ public interface Tap {
      * @param jobId
      * @return
      */
-    InputStream getJobSummary(String jobId);
+    InputStream getJobSummary(String jobId) throws IOException;
 
     /**
      * Gets the job identifier of an asynchronous query
      *
-     * @param conn the asynchronous query connection
+     *
+     * @param conn the asynchronous query connection which responses with HTTP 303 SEE OTHERS
      * @return
      * @throws Exception
      */
-    String getJobId(HttpURLConnection conn) throws Exception;
+    default String getJobId(HttpURLConnection conn) {
+        String[] location = conn.getHeaderField("Location").split("/");
+        return location[location.length - 1];
+    };
 
     /**
      * Checks the current async job phase
@@ -172,7 +179,7 @@ public interface Tap {
      * @param jobId
      * @return
      */
-    Integer deleteJob(String jobId);
+    void deleteJob(String jobId) throws IOException;
 
     /**
      * Gets the results of the async job
