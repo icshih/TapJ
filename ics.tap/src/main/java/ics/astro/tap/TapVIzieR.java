@@ -2,6 +2,8 @@ package ics.astro.tap;
 
 import ics.astro.tap.internal.AsyncQueryPhases;
 import ics.astro.tap.internal.Tap;
+import ics.astro.tap.parser.VOParser;
+import net.ivoa.xml.uws.v1.JobSummary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,47 +24,37 @@ public class TapVIzieR implements Tap {
 
     @Override
     public InputStream getAvailableTables() throws IOException {
-        String httpUrl = String.format("%s%s", TAP_URL, table);
-        logger.debug("{}", httpUrl);
-        HttpURLConnection conn = getHttpURLConnection(httpUrl);
-        conn.connect();
-        int code = getResponseCode(conn);
-        logger.debug("response code: {}", code);
-        if (code == HttpURLConnection.HTTP_OK)
-            return getInputStream(conn);
-        else
-            return null;
+        String url = String.format("%s%s", TAP_URL, table);
+        return put(url);
     }
 
     @Override
     public InputStream runSynchronousQuery(String query, String format) throws IOException {
-        String httpUrl = String.format("%s%s?REQUEST=doQuery&LANG=ADQL&FORMAT=%s&QUERY=%s",
+        String url = String.format("%s%s?REQUEST=doQuery&LANG=ADQL&FORMAT=%s&QUERY=%s",
                 TAP_URL, sync, format, URLEncoder.encode((query), ENC));
-        logger.debug("{}", httpUrl);
-        HttpURLConnection conn = getHttpURLConnection(httpUrl);
-        conn.connect();
-        int code = getResponseCode(conn);
-        logger.debug("response code: {}", code);
-        if (code == HttpURLConnection.HTTP_OK)
-            return getInputStream(conn);
-        else
-            return null;
+        return put(url);
     }
 
     @Override
-    public InputStream runAsynchronousJob(String query, String format) throws IOException {
-        String httpUrl = String.format("%s%s?PHASE=run&REQUEST=doQuery&LANG=ADQL&FORMAT=%s&QUERY=%s",
+    public String runAsynchronousJob(String query, String format) throws IOException {
+        String jobId = null;
+        String url = String.format("%s%s?PHASE=run&REQUEST=doQuery&LANG=ADQL&FORMAT=%s&QUERY=%s",
                 TAP_URL, async,format, URLEncoder.encode((query), ENC));
-        logger.debug("{}", httpUrl);
-        HttpURLConnection conn = getHttpURLConnection(httpUrl);
+        logger.debug("{}", url);
+        HttpURLConnection conn = getHttpURLConnection(url);
         conn.setRequestMethod("POST");
         conn.connect();
         int code = getResponseCode(conn);
-        logger.debug("response code: {}", code);
-        if (code == HttpURLConnection.HTTP_OK)
-            return getInputStream(conn);
-        else
-            return null;
+        if (code == HttpURLConnection.HTTP_OK) {
+            InputStream is = conn.getInputStream();
+            jobId = VOParser.parseJobId(is);
+            is.close();
+        } else if (code == HttpURLConnection.HTTP_SEE_OTHER) {
+            jobId = getJobId(conn);
+        } else {
+            logger.error("Unexpected reponse code: {}\n{}", code, conn.getResponseMessage());
+        }
+        return jobId;
     }
 
     @Override
@@ -75,83 +67,24 @@ public class TapVIzieR implements Tap {
         return null;
     }
 
-    /**
-     * Gets the job identifier of an asynchronous query
-     * @param inputStream of the asynchronous query
-     * @return
-     * @throws Exception
-     */
-    public String getJobId(InputStream inputStream) throws Exception {
-//        String template = "http://tapvizier.u-strasbg.fr:80/TAPVizieR/tap/async/(\\d*)/results/result";
-        String template = "<jobId>(\\d*)</jobId>";
-        Pattern pattern = Pattern.compile(template);
-        BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
-        String line;
-        String jobId = null;
-        while ((line = br.readLine()) != null) {
-            Matcher m = pattern.matcher(line);
-            if (m.find())
-                jobId = m.group(1);
-        }
-        br.close();
-        inputStream.close();
-        if (jobId != null)
-            logger.info("JobId: {}", jobId);
-        return jobId;
-    }
-
     @Override
-    public String updateJobPhase(String jobId, long millis) throws InterruptedException, IOException {
-        String phase;
-        int noSleep = 0;
-        do {
-            if (noSleep != 0)
-                Thread.currentThread().sleep(millis);
-            phase = getJobPhase(jobId);
-            if ((phase.equals(AsyncQueryPhases.ERROR.name()))
-                    || (phase.equals(AsyncQueryPhases.ABORTED.name()))) {
-                logger.error("The query ends in {}, see {}", phase, getJobError(jobId));
-                break;
-            }
-            noSleep++;
-        } while (!phase.equals(AsyncQueryPhases.COMPLETED.name()));
-        logger.info("Job {} final phase: {}", jobId, phase);
+    public String getJobPhase(String jobId) throws IOException {
+        String url = String.format("%s%s/%s", TAP_URL, async, jobId);
+        InputStream is = put(url);
+        JobSummary summary = VOParser.parseJobSummary(is);
+        String phase = summary.getPhase().value();
+        is.close();
         return phase;
     }
 
     @Override
-    public String getJobPhase(String jobId) throws IOException {
-        String httpUrl = String.format("%s%s/%s/phase",TAP_URL, async, jobId);
-        HttpURLConnection conn = getHttpURLConnection(httpUrl);
-        conn.connect();
-        int code = getResponseCode(conn);
-        logger.debug("response code: {}", code);
-        if (code == HttpURLConnection.HTTP_OK) {
-            InputStream is = conn.getInputStream();
-            BufferedReader br = new BufferedReader(new InputStreamReader(is));
-            String phase = br.lines().findFirst().get();
-            br.close();
-            logger.debug("Job {} current phase: {}", jobId,  phase);
-            return phase;
-        } else
-            return null;
-    }
-
-    @Override
     public String getJobError(String jobId) throws IOException {
-        String httpUrl = String.format("%s%s/%s/error",TAP_URL, async, jobId);
-        HttpURLConnection conn = getHttpURLConnection(httpUrl);
-        conn.connect();
-        int code = getResponseCode(conn);
-        logger.debug("response code: {}", code);
-        if (code == HttpURLConnection.HTTP_OK) {
-            InputStream is = conn.getInputStream();
-            BufferedReader br = new BufferedReader(new InputStreamReader(is));
-            br.lines().forEach(System.out::println);
-            br.close();
-            return null;
-        } else
-            return null;
+        String url = String.format("%s%s/%s", TAP_URL, async, jobId);
+        InputStream is = put(url);
+        JobSummary summary = VOParser.parseJobSummary(is);
+        String error = summary.getErrorSummary().getMessage();
+        is.close();
+        return error;
     }
 
     @Override
@@ -161,13 +94,6 @@ public class TapVIzieR implements Tap {
     @Override
     public InputStream getJobResult(String jobId) throws IOException {
         String httpUrl = String.format("%s%s/%s/results/result", TAP_URL, async, jobId);
-        HttpURLConnection conn = getHttpURLConnection(httpUrl);
-        conn.connect();
-        int code = getResponseCode(conn);
-        logger.debug("response code: {}", code);
-        if (code == HttpURLConnection.HTTP_OK) {
-            return conn.getInputStream();
-        } else
-            return null;
+        return put(httpUrl);
     }
 }

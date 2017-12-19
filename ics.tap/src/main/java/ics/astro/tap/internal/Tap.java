@@ -1,5 +1,6 @@
 package ics.astro.tap.internal;
 
+import net.ivoa.xml.uws.v1.ExecutionPhase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -114,7 +115,7 @@ public interface Tap {
      * @return inputStream of the response message
      * @throws IOException
      */
-    InputStream runAsynchronousJob(String query, String format) throws IOException;
+    String runAsynchronousJob(String query, String format) throws IOException;
 
     /**
      * Gets asynchronous job list
@@ -153,7 +154,22 @@ public interface Tap {
      * @throws InterruptedException
      * @throws IOException
      */
-    String updateJobPhase(String jobId, long millis) throws InterruptedException, IOException;
+     default String updateJobPhase(String jobId, long millis) throws InterruptedException, IOException {
+         boolean toContinue = true;
+         String phase = getJobPhase(jobId);
+         while (toContinue) {
+             logger.debug("current phase: {}", phase);
+             if (phase.equals(ExecutionPhase.COMPLETED.value()) ||
+                     phase.equals(ExecutionPhase.ABORTED.value()) ||
+                     phase.equals(ExecutionPhase.ERROR.value()))
+                 toContinue = false;
+             else {
+                 Thread.sleep(millis);
+                 phase = getJobPhase(jobId);
+             }
+         }
+         return phase;
+     };
 
     /**
      * Gets the async job phase

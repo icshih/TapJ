@@ -53,10 +53,9 @@ class TapGacsTest {
     @Test
     void runAsynchronousJob() {
         try {
-            InputStream is = gacs.runAsynchronousJob("SELECT TOP 5 * FROM gaiadr1.gaia_source", "votable");
-            Assertions.assertNotNull(is);
-            is.close();
-            String jobId = gacs.runAsynchronousJob("SELECT TOP 5 * FROM gaiadr1.gaia_source");
+            String jobId = gacs.runAsynchronousJob("SELECT TOP 5 * FROM gaiadr1.gaia_source", "votable");
+            Assertions.assertNotNull(jobId);
+            jobId = gacs.runAsynchronousJob("SELECT TOP 5 * FROM gaiadr1.gaia_source");
             Assertions.assertNotNull(jobId);
         } catch (IOException e) {
             e.printStackTrace();
@@ -127,16 +126,25 @@ class TapGacsTest {
             Assertions.assertEquals("ERROR", phase);
             String error = gacs.getJobError(jobId);
             Assertions.assertNotNull(error);
+            gacs.deleteJob(jobId);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     @Test
-    void deleteJob() {
-    }
-
-    @Test
     void getJobResult() {
+        try {
+            String jobId = gacs.runAsynchronousJob("SELECT TOP 1 * FROM gaiadr1.gaia_source", "csv");
+            String phase = gacs.updateJobPhase(jobId, 1000);
+            Assertions.assertEquals("COMPLETED", phase);
+            InputStream is = gacs.getJobResult(jobId);
+            Utils.display(is);
+            is.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

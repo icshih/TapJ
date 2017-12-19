@@ -2,7 +2,6 @@ package ics.astro.tap;
 
 import ics.astro.tap.internal.Tap;
 import ics.astro.tap.parser.VOParser;
-import ics.astro.tap.utils.Utils;
 import net.ivoa.xml.uws.v1.ExecutionPhase;
 import net.ivoa.xml.uws.v1.JobSummary;
 
@@ -30,9 +29,14 @@ public class TapGacs implements Tap {
 
 
     public String runAsynchronousJob(String query) throws Exception {
+        return runAsynchronousJob(query, "votable");
+    }
+
+    @Override
+    public String runAsynchronousJob(String query, String format) throws IOException {
         String jobId = null;
         String url = String.format("%s%s?%s", TAP_URL, async, String.format(
-                "PHASE=run&REQUEST=doQuery&LANG=ADQL&FORMAT=%s&QUERY=%s", "votable", URLEncoder.encode((query), ENC)));
+                "PHASE=run&REQUEST=doQuery&LANG=ADQL&FORMAT=%s&QUERY=%s", format, URLEncoder.encode((query), ENC)));
         HttpURLConnection conn = getHttpURLConnection(url);
         conn.setRequestMethod("POST");
         conn.connect();
@@ -50,22 +54,6 @@ public class TapGacs implements Tap {
     }
 
     @Override
-    public InputStream runAsynchronousJob(String query, String format) throws IOException {
-        String url = String.format("%s%s?%s", TAP_URL, async, String.format(
-                "PHASE=run&REQUEST=doQuery&LANG=ADQL&FORMAT=%s&QUERY=%s", format, URLEncoder.encode((query), ENC)));
-        HttpURLConnection conn = getHttpURLConnection(url);
-        conn.setRequestMethod("POST");
-        conn.connect();
-        int code = getResponseCode(conn);
-        if (code == HttpURLConnection.HTTP_OK || code == HttpURLConnection.HTTP_SEE_OTHER) {
-            return conn.getInputStream();
-        } else {
-            logger.error("Unexpected reponse code: {}\n{}", code, conn.getResponseMessage());
-            return null;
-        }
-    }
-
-    @Override
     public InputStream getJobList() throws IOException {
         String url = String.format("%s%s", TAP_URL, async);
         return put(url);
@@ -75,25 +63,6 @@ public class TapGacs implements Tap {
     public InputStream getJobSummary(String jobId) throws IOException {
         String url = String.format("%s%s/%s", TAP_URL, async, jobId);
         return put(url);
-    }
-
-    @Override
-    public String updateJobPhase(String jobId, long millis) throws InterruptedException, IOException {
-        boolean toContinue = true;
-        String phase = getJobPhase(jobId);
-        while (toContinue) {
-            logger.debug("current phase: {}", phase);
-            if (phase.equals(ExecutionPhase.COMPLETED.value()) ||
-                    phase.equals(ExecutionPhase.ABORTED.value()) ||
-                    phase.equals(ExecutionPhase.ERROR.value()))
-                toContinue = false;
-            else {
-                Thread.sleep(millis);
-                phase = getJobPhase(jobId);
-            }
-        }
-        return phase;
-
     }
 
     @Override
@@ -119,10 +88,6 @@ public class TapGacs implements Tap {
 
     @Override
     public String getJobError(String jobId) throws IOException {
-//        String url_ = String.format("%s%s", TAP_URL, String.format(async_error, jobId));
-//        InputStream is_ = put(url_);
-//        VOParser.parseError(is_);
-//        is_.close();
         String url = String.format("%s%s/%s", TAP_URL, async, jobId);
         InputStream is = put(url);
         JobSummary summary = VOParser.parseJobSummary(is);
@@ -150,6 +115,7 @@ public class TapGacs implements Tap {
 
     @Override
     public InputStream getJobResult(String jobId) throws IOException {
-        return null;
+        String url = String.format("%s%s", TAP_URL, String.format(async_result, jobId));
+        return put(url);
     }
 }
