@@ -23,7 +23,7 @@ public class VOParser {
 
     /**
      * Gets the available tables of the TAP service
-     * @param is from TableSet element in the VoDataService schema
+     * @param is from TableSet element, tap/tables, in the VoDataService schema
      * @return
      */
     public static List<String> parseTableSet(InputStream is) {
@@ -45,7 +45,7 @@ public class VOParser {
 
     /**
      * Gets the asynchronous jobs object of the TAP service
-     * @param is from Jobs element in the UWS schema
+     * @param is from Jobs element, tap/async, in the UWS schema
      * @return
      */
     public static Jobs parseJobs(InputStream is) {
@@ -62,7 +62,7 @@ public class VOParser {
 
     /**
      * Gets the asynchronous job summary
-     * @param is from Job element in the UWS schema
+     * @param is from Job element, tap/async/${jobId}, in the UWS schema
      * @return
      */
     public static JobSummary parseJobSummary(InputStream is) {
@@ -86,13 +86,18 @@ public class VOParser {
         return parseJobSummary(is).getJobId();
     }
 
+    /**
+     * Gets asynchronous job phase
+     * @param is from tap/async/${jobId}/phase defined in UWS specification
+     * @return
+     */
     public static String parseJobPhase(InputStream is) {
         BufferedReader br = new BufferedReader(new InputStreamReader(is));
         return br.lines().findFirst().get();
     }
 
     /**
-     * Gets Error cause
+     * Gets asynchronous job error cause
      * @param is from tap/async/${jobId}/error defined in UWS specification
      * @return
      */
