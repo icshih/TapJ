@@ -1,20 +1,15 @@
 package ics.astro.tap;
 
-import ics.astro.tap.internal.AsyncQueryPhases;
 import ics.astro.tap.internal.Tap;
 import ics.astro.tap.parser.VOParser;
-import net.ivoa.xml.uws.v1.JobSummary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URLEncoder;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class TapVIzieR implements Tap {
 
@@ -58,21 +53,22 @@ public class TapVIzieR implements Tap {
     }
 
     @Override
-    public InputStream getJobList() {
-        return null;
+    public InputStream getJobList() throws IOException {
+        String url = String.format("%s%s", TAP_URL, async);
+        return put(url);
     }
 
     @Override
-    public InputStream getJobSummary(String jobId) {
-        return null;
+    public InputStream getJobSummary(String jobId) throws IOException {
+        String url = String.format("%s%s/%s", TAP_URL, async, jobId);
+        return put(url);
     }
 
     @Override
     public String getJobPhase(String jobId) throws IOException {
         String url = String.format("%s%s/%s", TAP_URL, async, jobId);
         InputStream is = put(url);
-        JobSummary summary = VOParser.parseJobSummary(is);
-        String phase = summary.getPhase().value();
+        String phase = VOParser.parseJobPhase(VOParser.parseJobSummary(is));
         is.close();
         return phase;
     }
@@ -81,19 +77,31 @@ public class TapVIzieR implements Tap {
     public String getJobError(String jobId) throws IOException {
         String url = String.format("%s%s/%s", TAP_URL, async, jobId);
         InputStream is = put(url);
-        JobSummary summary = VOParser.parseJobSummary(is);
-        String error = summary.getErrorSummary().getMessage();
+        String error = VOParser.parseError(VOParser.parseJobSummary(is));
         is.close();
         return error;
     }
 
     @Override
-    public void deleteJob(String jobId) {
+    public void deleteJob(String jobId) throws IOException {
+        String url = String.format("%s%s/%s", TAP_URL, async, jobId);
+        HttpURLConnection conn = getHttpURLConnection(url);
+        conn.setRequestMethod("POST");
+        conn.setDoOutput(true);
+        DataOutputStream printOut = new DataOutputStream(conn.getOutputStream());
+        printOut.writeBytes("ACTION=DELETE");
+        printOut.flush();
+        printOut.close();
+        conn.connect();
+        int code = getResponseCode(conn);
+        if (code != HttpURLConnection.HTTP_OK)
+            logger.error("Cannot delete job {}", jobId);
+        conn.disconnect();
     }
 
     @Override
     public InputStream getJobResult(String jobId) throws IOException {
-        String httpUrl = String.format("%s%s/%s/results/result", TAP_URL, async, jobId);
-        return put(httpUrl);
+        String url = String.format("%s%s", TAP_URL, String.format(async_error, jobId));
+        return put(url);
     }
 }

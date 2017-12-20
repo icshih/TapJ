@@ -25,6 +25,8 @@ public interface Tap {
     String async_result = async + "/%s/results/result";
     String async_error = async + "/%s/error";
     String ENC = "UTF-8";
+    String LINE_FEED = "\r\n";
+    String BOUNDARY = "===" + System.currentTimeMillis() + "===";
     static final Logger logger = LoggerFactory.getLogger(Tap.class);
 
     /**

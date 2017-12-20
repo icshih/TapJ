@@ -1,18 +1,12 @@
 package ics.astro.tap;
 
 import ics.astro.tap.internal.AsyncQueryPhases;
-import ics.astro.tap.parser.VOParser;
 import ics.astro.tap.utils.Utils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 class TapVIzieRTest {
 

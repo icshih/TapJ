@@ -2,16 +2,13 @@ package ics.astro.tap;
 
 import ics.astro.tap.parser.VOParser;
 import ics.astro.tap.utils.Utils;
-import net.ivoa.xml.uws.v1.ExecutionPhase;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.List;
 
 class TapGacsTest {

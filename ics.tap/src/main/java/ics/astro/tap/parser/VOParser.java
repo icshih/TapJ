@@ -79,7 +79,7 @@ public class VOParser {
 
     /**
      * Gets the asynchronous job identifier
-     * @param is
+     * @param is from tap/async/${jobId}
      * @return
      */
     public static String parseJobId(InputStream is) {
@@ -94,6 +94,10 @@ public class VOParser {
     public static String parseJobPhase(InputStream is) {
         BufferedReader br = new BufferedReader(new InputStreamReader(is));
         return br.lines().findFirst().get();
+    }
+
+    public static String parseJobPhase(JobSummary js) {
+        return js.getPhase().value();
     }
 
     /**
@@ -115,5 +119,14 @@ public class VOParser {
             logger.error("", e);
         }
         return error.trim();
+    }
+
+    /**
+     * Gets asynchronous job error cause
+     * @param js the JobSummary of the asynchronous job
+     * @return
+     */
+    public static String parseError(JobSummary js) {
+        return js.getErrorSummary().getMessage();
     }
 }
