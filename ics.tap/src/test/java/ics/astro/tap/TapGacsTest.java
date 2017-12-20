@@ -82,7 +82,6 @@ class TapGacsTest {
             InputStream js = gacs.getJobSummary(id);
             Assertions.assertNotNull(js);
             VOParser.parseJobId(js);
-            Utils.display(js);
             js.close();
         } catch (IOException e) {
             e.printStackTrace();
