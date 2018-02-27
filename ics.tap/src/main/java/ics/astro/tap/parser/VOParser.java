@@ -52,7 +52,7 @@ public class VOParser {
             JAXBContext context = JAXBContext.newInstance(Jobs.class);
             Unmarshaller um = context.createUnmarshaller();
             return (Jobs) um.unmarshal(is);
-        } catch (JAXBException e) {
+        } catch (Exception e) {
             throw new TapException(e.getMessage());
         }
     }
@@ -67,7 +67,7 @@ public class VOParser {
             JAXBContext context = JAXBContext.newInstance(JobSummary.class);
             Unmarshaller um = context.createUnmarshaller();
             return (JobSummary) ((JAXBElement<?>) um.unmarshal(is)).getValue();
-        } catch (JAXBException e) {
+        } catch (Exception e) {
             throw new TapException(e.getMessage());
         }
     }
@@ -109,7 +109,7 @@ public class VOParser {
                     .flatMap(r -> r.getINFO().stream())
                     .filter(i -> i.getName().equals("QUERY_STATUS"))
                     .findAny().get().getValue().trim();
-        } catch (JAXBException e) {
+        } catch (Exception e) {
             throw new TapException(e.getMessage());
         }
     }
