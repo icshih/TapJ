@@ -33,6 +33,8 @@ class TapGacsTest {
             is.close();
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (TapException e) {
+            e.printStackTrace();
         }
     }
 
@@ -70,6 +72,8 @@ class TapGacsTest {
             is.close();
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (TapException e) {
+            e.printStackTrace();
         }
     }
 
@@ -84,6 +88,8 @@ class TapGacsTest {
             VOParser.parseJobId(js);
             js.close();
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (TapException e) {
             e.printStackTrace();
         }
 

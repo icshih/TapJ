@@ -1,5 +1,6 @@
 package ics.astro.tap.parser;
 
+import ics.astro.tap.TapException;
 import net.ivoa.xml.uws.v1.JobSummary;
 import net.ivoa.xml.uws.v1.Jobs;
 import net.ivoa.xml.vodataservice.v1.TableSet;
@@ -26,21 +27,19 @@ public class VOParser {
      * @param is from TableSet element, tap/tables, in the VoDataService schema
      * @return
      */
-    public static List<String> parseTableSet(InputStream is) {
-        List<String> tableList = null;
+    public static List<String> parseTableSet(InputStream is) throws TapException {
         try {
             JAXBContext context = JAXBContext.newInstance(TableSet.class);
             Unmarshaller um = context.createUnmarshaller();
             TableSet ts = (TableSet) ((JAXBElement<?>) um.unmarshal(is)).getValue();
-            tableList = ts.getSchema().stream()
+            return ts.getSchema().stream()
                     .flatMap(s -> s.getTable().stream())
                     .map(t -> t.getName())
                     .filter(n -> !n.contains("tap_schema"))
                     .collect(Collectors.toList());
         } catch (JAXBException e) {
-            logger.error("", e);
+            throw new TapException(e.getMessage());
         }
-        return tableList;
     }
 
     /**
@@ -48,16 +47,14 @@ public class VOParser {
      * @param is from Jobs element, tap/async, in the UWS schema
      * @return
      */
-    public static Jobs parseJobs(InputStream is) {
-        Jobs jobs = null;
+    public static Jobs parseJobs(InputStream is) throws TapException {
         try {
             JAXBContext context = JAXBContext.newInstance(Jobs.class);
             Unmarshaller um = context.createUnmarshaller();
-            jobs = (Jobs) um.unmarshal(is);
+            return (Jobs) um.unmarshal(is);
         } catch (JAXBException e) {
-            logger.error("", e);
+            throw new TapException(e.getMessage());
         }
-        return jobs;
     }
 
     /**
@@ -65,16 +62,14 @@ public class VOParser {
      * @param is from Job element, tap/async/${jobId}, in the UWS schema
      * @return
      */
-    public static JobSummary parseJobSummary(InputStream is) {
-        JobSummary js = null;
+    public static JobSummary parseJobSummary(InputStream is) throws TapException {
         try {
             JAXBContext context = JAXBContext.newInstance(JobSummary.class);
             Unmarshaller um = context.createUnmarshaller();
-            js = (JobSummary) ((JAXBElement<?>) um.unmarshal(is)).getValue();
+            return (JobSummary) ((JAXBElement<?>) um.unmarshal(is)).getValue();
         } catch (JAXBException e) {
-            logger.error("", e);
+            throw new TapException(e.getMessage());
         }
-        return js;
     }
 
     /**
@@ -82,7 +77,7 @@ public class VOParser {
      * @param is from tap/async/${jobId}
      * @return
      */
-    public static String parseJobId(InputStream is) {
+    public static String parseJobId(InputStream is) throws TapException {
         return parseJobSummary(is).getJobId();
     }
 
@@ -105,20 +100,18 @@ public class VOParser {
      * @param is from tap/async/${jobId}/error defined in UWS specification
      * @return
      */
-    public static String parseError(InputStream is) {
-        String error = "";
+    public static String parseError(InputStream is) throws TapException {
         try {
             JAXBContext context = JAXBContext.newInstance(VOTABLE.class);
             Unmarshaller um = context.createUnmarshaller();
             VOTABLE vt = (VOTABLE) um.unmarshal(is);
-            error = vt.getRESOURCE().stream()
+            return vt.getRESOURCE().stream()
                     .flatMap(r -> r.getINFO().stream())
                     .filter(i -> i.getName().equals("QUERY_STATUS"))
-                    .findAny().get().getValue();
+                    .findAny().get().getValue().trim();
         } catch (JAXBException e) {
-            logger.error("", e);
+            throw new TapException(e.getMessage());
         }
-        return error.trim();
     }
 
     /**

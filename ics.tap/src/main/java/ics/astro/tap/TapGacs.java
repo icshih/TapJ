@@ -37,7 +37,7 @@ public class TapGacs implements Tap {
     }
 
     @Override
-    public String runAsynchronousJob(String query, String format) throws IOException {
+    public String runAsynchronousJob(String query, String format) throws IOException, TapException {
         String jobId = null;
         String url = String.format("%s%s?%s", TAP_URL, async, String.format(
                 "PHASE=run&REQUEST=doQuery&LANG=ADQL&FORMAT=%s&QUERY=%s", format, URLEncoder.encode((query), ENC)));
@@ -70,7 +70,7 @@ public class TapGacs implements Tap {
     }
 
     @Override
-    public String getJobPhase(String jobId) throws IOException {
+    public String getJobPhase(String jobId) throws IOException, TapException {
         String url = String.format("%s%s/%s", TAP_URL, async, jobId);
         InputStream is = put(url);
         String phase = VOParser.parseJobPhase(VOParser.parseJobSummary(is));
@@ -79,7 +79,7 @@ public class TapGacs implements Tap {
     }
 
     @Override
-    public String getJobError(String jobId) throws IOException {
+    public String getJobError(String jobId) throws IOException, TapException {
         String url = String.format("%s%s/%s", TAP_URL, async, jobId);
         InputStream is = put(url);
         String error = VOParser.parseError(VOParser.parseJobSummary(is));

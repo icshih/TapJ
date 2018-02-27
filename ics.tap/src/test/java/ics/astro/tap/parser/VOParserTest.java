@@ -1,5 +1,6 @@
 package ics.astro.tap.parser;
 
+import ics.astro.tap.TapException;
 import org.junit.jupiter.api.Test;
 
 import java.io.*;
@@ -17,6 +18,8 @@ class VOParserTest {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (TapException e) {
             e.printStackTrace();
         }
 
