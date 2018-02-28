@@ -101,7 +101,7 @@ public class TapVIzieR implements Tap {
 
     @Override
     public InputStream getJobResult(String jobId) throws IOException {
-        String url = String.format("%s%s", TAP_URL, String.format(async_error, jobId));
+        String url = String.format("%s%s", TAP_URL, String.format(async_result, jobId));
         return put(url);
     }
 }
